@@ -654,6 +654,15 @@ TLNAPI bool TLN_SetSpriteWorldPosition(int nsprite, int x, int y);
 TLNAPI void TLN_ReleaseWorld(void);
 /**@}*/
 
+/**
+ * \defgroup sound
+ * \brief Sound manipulation
+* @{ */
+bool TLN_SoundInit(int nsounds, char **filenames);
+void TLN_SoundDeinit();
+void TLN_PlaySound(int nsound);
+/**@}*/
+
 #ifdef __cplusplus
 }
 #endif
