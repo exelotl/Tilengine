@@ -401,6 +401,7 @@ TLNAPI void TLN_SetFrameCallback (TLN_VideoCallback);
 TLNAPI void TLN_SetRenderTarget (uint8_t* data, int pitch);
 TLNAPI void TLN_UpdateFrame (int frame);
 TLNAPI void TLN_SetLoadPath (const char* path);
+TLNAPI char* TLN_GetLoadPath();
 TLNAPI void TLN_SetCustomBlendFunction (TLN_BlendFunction);
 TLNAPI void TLN_SetLogLevel(TLN_LogLevel log_level);
 TLNAPI bool TLN_OpenResourcePack(const char* filename, const char* key);
@@ -658,9 +659,14 @@ TLNAPI void TLN_ReleaseWorld(void);
  * \defgroup sound
  * \brief Sound manipulation
 * @{ */
-bool TLN_SoundInit(int nsounds, char **filenames);
-void TLN_SoundDeinit();
-void TLN_PlaySound(int nsound);
+TLNAPI bool TLN_SoundInit(int nsounds, char **filenames); 
+TLNAPI bool TLN_MusicInit(char *filename);
+TLNAPI void TLN_SoundDeinit();
+TLNAPI void TLN_PlaySound(int nsound);
+TLNAPI void TLN_PlayMusic();
+TLNAPI void TLN_StopMusic();
+TLNAPI void TLN_MusicVolume(int volume);
+
 /**@}*/
 
 #ifdef __cplusplus

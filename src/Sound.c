@@ -18,15 +18,35 @@
 #endif
 
 #define MAX_PATH	300
-Mix_Chunk* _sample[8];
+#define MAX_SOUNDS	8
+Mix_Chunk* _sample[MAX_SOUNDS];
+Mix_Music* _music;
+
+bool _mixAudioOpened = false;
+bool _mixChannelsAllocated = false;
 
 
 /*!
  * \brief
- * Initialize audio subsys and preload sounds
- * 
- * \param nsprite
- * Id of the sprite [0, num_sprites - 1]
+ * Initialize audio subsys 
+ */
+bool TLN_AudioSybsysInit()
+{
+	// Set up the audio stream
+	if(!_mixAudioOpened && Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) < 0)
+		return false;
+	_mixAudioOpened = true;
+
+	if(!_mixChannelsAllocated && Mix_AllocateChannels(MIX_DEFAULT_CHANNELS) < 0)
+			return false;
+	_mixChannelsAllocated = true;
+
+	return true;
+}
+
+/*!
+ * \brief
+ * Preload sounds
  * 
  * \param nsounds
  * Count of preloaded sound files, max 8
@@ -37,30 +57,56 @@ Mix_Chunk* _sample[8];
  */
 bool TLN_SoundInit(int nsounds, char **filenames)
 {
-	memset(_sample, 0, sizeof(Mix_Chunk*) * 8);
-
-    // Set up the audio stream
-    if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) < 0)
-    {
+	char path[MAX_PATH + 1];
+	memset(_sample, 0, sizeof(Mix_Chunk*) * MAX_SOUNDS);
+	if (!TLN_AudioSybsysInit())
 		return false;
-    }
+	
+	if (nsounds > MAX_SOUNDS)
+		nsounds = MAX_SOUNDS;
+	
+	// Load waveforms
+	for(int i = 0; i < nsounds; i++)
+	{
+#if (_MSC_VER) && (_MSC_VER < 1900)
+		sprintf (path, "%s/%s", TLN_GetLoadPath(), filenames[i]);
+#else
+		snprintf (path, sizeof(path), "%s/%s", TLN_GetLoadPath(), filenames[i]);
+#endif
+		_sample[i] = Mix_LoadWAV(path);
+		if( _sample[i] == NULL )
+		{
+			return false;
+		}
+	}
 
-    if(Mix_AllocateChannels(MIX_DEFAULT_CHANNELS) < 0)
-    {
+	return true;
+}
+
+/*!
+ * \brief
+ * Preload music
+ * 
+ * \param filename
+ * Filename of melody
+ * 
+ */
+bool TLN_MusicInit(char *filename)
+{
+	char path[MAX_PATH + 1];
+	if(!TLN_AudioSybsysInit())
 		return false;
-    }
 
-    // Load waveforms
-    for(int i = 0; i < nsounds; i++)
-    {
-        _sample[i] = Mix_LoadWAV(filenames[i]);
-        if( _sample[i] == NULL )
-        {
-            return false;
-        }
-    }
+#if (_MSC_VER) && (_MSC_VER < 1900)
+		sprintf (path, "%s/%s", TLN_GetLoadPath(), filename);
+#else
+		snprintf (path, sizeof(path), "%s/%s", TLN_GetLoadPath(), filename);
+#endif
+	_music = Mix_LoadMUS(path);
+	if (_music==NULL)
+		return false;
 
-    return true;
+	return true;
 }
 
 /*!
@@ -71,11 +117,13 @@ bool TLN_SoundInit(int nsounds, char **filenames)
 void TLN_SoundDeinit()
 {
 	for(int i = 0; i < 8; i++)
-    {
+	{
 		if (_sample[i] != NULL)
-        	Mix_FreeChunk(_sample[i]);
-    }
-    Mix_CloseAudio();
+			Mix_FreeChunk(_sample[i]);
+	}
+	Mix_HaltMusic();
+	Mix_FreeMusic(_music);
+	Mix_CloseAudio();
 }
 
 /*!
@@ -90,4 +138,44 @@ void TLN_PlaySound(int nsound)
 {
 	if (_sample[nsound] != NULL)
 		Mix_PlayChannel(-1, _sample[nsound], 0);
+}
+
+/*!
+ * \brief
+ * Play preloaded music
+ * 
+ */
+void TLN_PlayMusic()
+{
+	if (_music == NULL)
+		return;
+
+	if (Mix_PlayingMusic())
+		Mix_HaltMusic();
+
+	Mix_PlayMusic(_music, -1);
+}
+
+/*!
+ * \brief
+ * Stop playing preloaded music
+ * 
+ */
+void TLN_StopMusic()
+{
+	Mix_HaltMusic();
+}
+
+/*!
+ * \brief
+ * Change music volume
+ * 
+ * \param volume
+ * Sound volume [0..128]
+ * 
+ */
+void TLN_MusicVolume(int volume)
+{
+	
+	Mix_VolumeMusic(volume);
 }
